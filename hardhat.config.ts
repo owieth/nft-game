@@ -11,6 +11,9 @@ dotenv.config();
 
 const config: HardhatUserConfig = {
   solidity: "0.8.4",
+  paths: {
+    artifacts: './frontend/src/artifacts'
+  },
   networks: {
     rinkeby: {
       url: process.env.RINKEBY_URL || "",
