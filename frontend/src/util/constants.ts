@@ -1,10 +1,7 @@
 import { CharacterData } from "../models/CharacterData";
 
-const CONTRACT_ADDRESS = 'YOUR_CONTRACT_ADDRESS_GOES_HERE';
+const CONTRACT_ADDRESS = '0x18378200A10E5390EAdA77BF1246fEdB4C991a1A';
 
-/*
- * Add this method and make sure to export it on the bottom!
- */
 const transformCharacterData = (characterData: CharacterData) => {
     return {
         name: characterData.name,

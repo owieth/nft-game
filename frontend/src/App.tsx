@@ -1,13 +1,12 @@
-import { check } from "prettier";
+import { ethers } from "ethers";
 import React, { useEffect, useState } from "react";
 import Web3 from "web3";
 import Web3Modal from "web3modal";
 import "./App.scss";
-import SelectCharacter from "./components/SelectCharacter/SelectCharacter";
 import Game from "./artifacts/contracts/Game.sol/Game.json";
-import { CONTRACT_ADDRESS, transformCharacterData } from "./util/constants";
-import { ethers } from "ethers";
+import SelectCharacter from "./components/SelectCharacter/SelectCharacter";
 import { CharacterData } from "./models/CharacterData";
+import { CONTRACT_ADDRESS, transformCharacterData } from "./util/constants";
 
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState("");
@@ -50,9 +49,6 @@ const App = () => {
   );
 
   const renderContent = () => {
-    /*
-     * Scenario #1
-     */
     if (!currentAccount) {
       return (
         <div className="connect-wallet-container">
@@ -68,11 +64,7 @@ const App = () => {
           </button>
         </div>
       );
-      /*
-       * Scenario #2
-       */
     } else if (currentAccount && !characterNFT) {
-      // return <SelectCharacter setCharacterNFT={setCharacterNFT} />;
       return <SelectCharacter />;
     }
   };
@@ -82,9 +74,6 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    /*
-     * The function we will call that interacts with out smart contract
-     */
     const fetchNFTMetadata = async () => {
       console.log("Checking for Character NFT on address:", currentAccount);
 
@@ -105,9 +94,6 @@ const App = () => {
       }
     };
 
-    /*
-     * We only want to run this, if we have a connected wallet
-     */
     if (currentAccount) {
       console.log("CurrentAccount:", currentAccount);
       fetchNFTMetadata();
