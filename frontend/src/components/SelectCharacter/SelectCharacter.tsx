@@ -1,13 +1,15 @@
 import { ethers } from "ethers";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Game from "../../artifacts/contracts/Game.sol/Game.json";
 import { CharacterData } from "../../models/CharacterData";
 import { CONTRACT_ADDRESS, transformCharacterData } from "../../util/constants";
+import Loader from "../loader/Loader";
 import "./SelectCharacter.scss";
 
 const SelectCharacter = ({ setCharacterNFT }: any) => {
   const [characters, setCharacters] = useState<CharacterData[]>([]);
   const [gameContract, setGameContract] = useState<ethers.Contract>();
+  const [mintingCharacter, setMintingCharacter] = useState(false);
 
   useEffect(() => {
     const { ethereum } = window;
@@ -30,10 +32,7 @@ const SelectCharacter = ({ setCharacterNFT }: any) => {
   useEffect(() => {
     const getCharacters = async () => {
       try {
-        console.log("Getting contract characters to mint");
-
         const charactersTxn = await gameContract?.getAllDefaultCharacters();
-        console.log("charactersTxn:", charactersTxn);
 
         const characters = charactersTxn.map((characterData: CharacterData) =>
           transformCharacterData(characterData)
@@ -45,19 +44,10 @@ const SelectCharacter = ({ setCharacterNFT }: any) => {
       }
     };
 
-    const onCharacterMint = async (
-      sender: string,
-      tokenId: number,
-      characterIndex: number
-    ) => {
-      console.log(
-        `CharacterNFTMinted - sender: ${sender} tokenId: ${tokenId} characterIndex: ${characterIndex}`
-      );
-
+    const onCharacterMint = async () => {
       if (gameContract) {
         const characterNFT = await gameContract.checkIfUserHasNFT();
-        console.log("CharacterNFT: ", characterNFT);
-        setCharacterNFT(transformCharacterData(characterNFT));
+        setCharacterNFT(transformCharacterData(characterNFT) as CharacterData);
       }
     };
 
@@ -77,13 +67,16 @@ const SelectCharacter = ({ setCharacterNFT }: any) => {
   const mintNFT = (characterId: number) => async () => {
     try {
       if (gameContract) {
-        console.log("Minting character in progress...");
+        setMintingCharacter(true);
+
         const mintTxn = await gameContract.mintNFT(characterId);
         await mintTxn.wait();
-        console.log("mintTxn:", mintTxn);
+
+        setMintingCharacter(false);
       }
     } catch (error) {
       console.warn("MintCharacterAction Error:", error);
+      setMintingCharacter(false);
     }
   };
 
@@ -107,6 +100,18 @@ const SelectCharacter = ({ setCharacterNFT }: any) => {
       <h2>Mint Your Hero. Choose wisely.</h2>
       {characters.length > 0 && (
         <div className="character-grid">{renderCharacters()}</div>
+      )}
+      {mintingCharacter && (
+        <div className="loading">
+          <div className="indicator">
+            <Loader />
+            <p>Minting In Progress...</p>
+          </div>
+          <img
+            src="https://media2.giphy.com/media/61tYloUgq1eOk/giphy.gif?cid=ecf05e47dg95zbpabxhmhaksvoy8h526f96k4em0ndvx078s&rid=giphy.gif&ct=g"
+            alt="Minting loading indicator"
+          />
+        </div>
       )}
     </div>
   );

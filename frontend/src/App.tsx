@@ -1,9 +1,11 @@
 import { ethers } from "ethers";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Web3 from "web3";
 import Web3Modal from "web3modal";
 import "./App.scss";
 import Game from "./artifacts/contracts/Game.sol/Game.json";
+import Arena from "./components/arena/Arena";
+import Loader from "./components/loader/Loader";
 import SelectCharacter from "./components/SelectCharacter/SelectCharacter";
 import { CharacterData } from "./models/CharacterData";
 import { CONTRACT_ADDRESS, transformCharacterData } from "./util/constants";
@@ -11,12 +13,13 @@ import { CONTRACT_ADDRESS, transformCharacterData } from "./util/constants";
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState("");
   const [characterNFT, setCharacterNFT] = useState<CharacterData>();
+  const [isLoading, setIsLoading] = useState(false);
 
   const checkIfWalletIsConnected = async () => {
     const providerOptions = {};
 
     const web3Modal = new Web3Modal({
-      providerOptions, // required
+      providerOptions,
     });
 
     try {
@@ -25,8 +28,6 @@ const App = () => {
       const web3 = new Web3(provider);
 
       const chainId = await web3.eth.getChainId();
-
-      console.log(chainId);
 
       if (chainId === 0x4) {
         const accounts = await web3.eth.getAccounts();
@@ -37,6 +38,8 @@ const App = () => {
     } catch (error) {
       console.log(error);
     }
+
+    setIsLoading(false);
   };
 
   const renderNotConnectedContainer = () => (
@@ -49,6 +52,10 @@ const App = () => {
   );
 
   const renderContent = () => {
+    if (isLoading) {
+      return <Loader />;
+    }
+
     if (!currentAccount) {
       return (
         <div className="connect-wallet-container">
@@ -65,18 +72,21 @@ const App = () => {
         </div>
       );
     } else if (currentAccount && !characterNFT) {
-      return <SelectCharacter />;
+      return <SelectCharacter setCharacterNFT={setCharacterNFT} />;
+    } else if (currentAccount && characterNFT) {
+      return (
+        <Arena characterNFT={characterNFT} setCharacterNFT={setCharacterNFT} />
+      );
     }
   };
 
   useEffect(() => {
+    setIsLoading(true);
     checkIfWalletIsConnected();
   }, []);
 
   useEffect(() => {
     const fetchNFTMetadata = async () => {
-      console.log("Checking for Character NFT on address:", currentAccount);
-
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
       const gameContract = new ethers.Contract(
@@ -85,17 +95,15 @@ const App = () => {
         signer
       );
 
-      const txn: CharacterData = await gameContract.checkIfUserHasNFT();
-      if (txn.name) {
-        console.log("User has character NFT");
-        setCharacterNFT(transformCharacterData(txn) as CharacterData);
-      } else {
-        console.log("No character NFT found");
+      const characterNFT = await gameContract.checkIfUserHasNFT();
+      if (characterNFT.name) {
+        setCharacterNFT(transformCharacterData(characterNFT) as CharacterData);
       }
+
+      setIsLoading(false);
     };
 
     if (currentAccount) {
-      console.log("CurrentAccount:", currentAccount);
       fetchNFTMetadata();
     }
   }, [currentAccount]);
